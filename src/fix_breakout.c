@@ -9,8 +9,8 @@ void raylib_js_set_entry(void (*entry)(void));
 
 #define ARR_SIZE(arr) sizeof(arr)/sizeof(arr[0])
 
-#define SCREEN_WIDTH 600
-#define SCREEN_HEIGHT 800
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
 #define CRT_BLACK (Color){18, 18, 18, 255}
 
 typedef struct 
