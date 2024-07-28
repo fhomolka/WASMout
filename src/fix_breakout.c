@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include <math.h>
 //#include "zozlib.js"
 void raylib_js_set_entry(void (*entry)(void));
 
@@ -54,6 +55,15 @@ void draw_entity(Entity *e)
 	DrawRectangleRec(e->rect, e->colour);
 }
 
+Vector2 rect_centre(Rectangle rect)
+{
+	return (Vector2)
+	{
+		(rect.x + rect.x + rect.width) / 2.0f,
+		(rect.y + rect.y + rect.height) / 2.0f
+	};
+}
+
 void game_frame(void)
 {
 	float delta_time = GetFrameTime();
@@ -93,7 +103,19 @@ void game_frame(void)
 			break;
 		}
 
-		if(aabb_check(ball.rect, player.rect)) ball_velocity.y = -ball_velocity.y;
+		if(aabb_check(ball.rect, player.rect) && ball_velocity.y > -0.01) 
+		{
+			float player_centre = (player.rect.x + player.rect.x + player.rect.width) / 2.0f;
+			float ball_centre = (ball.rect.x + ball.rect.x + ball.rect.width) / 2.0f;
+
+			if (ball_centre < player_centre) { ball_velocity.x = -fabsf(ball_velocity.x); }
+			if (ball_centre > player_centre) { ball_velocity.x =  fabsf(ball_velocity.x); }
+
+			ball_velocity.y = -ball_velocity.y;
+			ball.rect.x += ball_velocity.x * delta_time;
+			ball.rect.y += ball_velocity.y * delta_time;
+			continue; //Assume the ball cannot collide with player paddle and bricks at the same time
+		}
 
 		for(int i = 0; i < BRICK_COUNT; i += 1)
 		{
@@ -101,25 +123,30 @@ void game_frame(void)
 			if(!aabb_check(ball.rect, bricks[i].rect)) continue; //Did not hit the brick
 
 			bricks[i].active = false;
+
 			//This is just a dumb aabb check again, but this time with side info
-			if(ball.rect.y < bricks[i].rect.y + bricks[i].rect.height) 
+			if(ball.rect.y < bricks[i].rect.y + bricks[i].rect.height) //ball is below
 			{
-				ball_velocity.y = -ball_velocity.y; 
+				if (ball_velocity.y < 0.0f)
+					ball_velocity.y = -ball_velocity.y; 
 				continue;
 			}
-			if(ball.rect.y + ball.rect.height > bricks[i].rect.y) 
+			if(ball.rect.y + ball.rect.height > bricks[i].rect.y) //ball is above
 			{
-				ball_velocity.y = -ball_velocity.y; 
+				if (ball_velocity.y > 0.0f)
+					ball_velocity.y = -ball_velocity.y; 
 				continue;
 			}
-			if(ball.rect.x < bricks[i].rect.x + bricks[i].rect.width)
+			if(ball.rect.x < bricks[i].rect.x + bricks[i].rect.width) //ball is right
 			{
-				ball_velocity.x = -ball_velocity.x;
+				if (ball_velocity.x < 0.0f)
+					ball_velocity.x = -ball_velocity.x;
 				continue;
 			}
-			if(ball.rect.x + ball.rect.width > bricks[i].rect.x)
+			if(ball.rect.x + ball.rect.width > bricks[i].rect.x) //ball is left
 			{
-				ball_velocity.x = -ball_velocity.x; 
+				if (ball_velocity.x > 0.0f)
+					ball_velocity.x = -ball_velocity.x; 
 				continue;
 			}
 		}
